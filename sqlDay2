@@ -1,0 +1,43 @@
+SQL: Find 2nd highest amount(use ROW_NUMBER() / RANK()) and use diff query
+
+| order\_id | item     | amount | customer\_id |
+| --------- | -------- | ------ | ------------ |
+| 1         | Keyboard | 400    | 4            |
+| 2         | Mouse    | 300    | 4            |
+| 3         | Monitor  | 12000  | 3            |
+| 4         | Keyboard | 400    | 1            |
+| 5         | Mousepad | 250    | 2            |
+
+
+Query 1: Using RANK()
+
+SELECT amount
+FROM (
+    SELECT amount,
+           RANK() OVER (ORDER BY amount DESC) AS rnk
+    FROM Orders
+) ranked_amounts
+WHERE rnk = 2;
+
+
+Query 2: Using ROW_NUMBER()
+
+SELECT amount
+FROM (
+    SELECT amount,
+           ROW_NUMBER() OVER (ORDER BY amount DESC) AS rn
+    FROM (
+        SELECT DISTINCT amount
+        FROM Orders
+    ) unique_amounts
+) numbered
+WHERE rn = 2;
+
+
+Query 3: Using Subquery with MAX
+
+SELECT MAX(amount) AS second_highest
+FROM Orders
+WHERE amount < (SELECT MAX(amount) FROM Orders);
+
+
