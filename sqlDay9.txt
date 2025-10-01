@@ -1,0 +1,22 @@
+-- Step 1: Create a CTE (Common Table Expression) named 'CTE_Employee'
+WITH CTE_Employee AS (
+
+    -- Step 2: Select required columns from the Employee table
+    SELECT 
+        emp_id,             -- Employee ID
+        emp_name,           -- Employee Name
+        department,         -- Department name
+        salary,             -- Individual salary of the employee
+
+        -- Step 3: Calculate cumulative (running total) salary within each department
+        SUM(salary) OVER (
+            PARTITION BY department      -- Restart total for every department
+            ORDER BY emp_id              -- Order employees within department (based on emp_id)
+        ) AS cumulative_salary           -- Alias name for the running total column
+
+    FROM Employee                        -- Source table
+)
+
+-- Step 4: Select all columns (including calculated cumulative_salary) from the CTE
+SELECT * 
+FROM CTE_Employee;
