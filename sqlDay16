@@ -1,0 +1,118 @@
+-- ======================================================
+-- 🔹 SQL Queries to Find Top 3 Salaries Department-wise
+-- ======================================================
+
+-- 🧩 Table: employees
+-- Columns: emp_id | emp_name | department_id | salary
+
+-- ======================================================
+-- 1️⃣ Using RANK() - Handles duplicates (same salary = same rank)
+-- ======================================================
+SELECT department_id, emp_name, salary
+FROM (
+    SELECT 
+        department_id,
+        emp_name,
+        salary,
+        RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rnk
+    FROM employees
+) ranked
+WHERE rnk <= 3
+ORDER BY department_id, salary DESC;
+
+-- ======================================================
+-- 2️⃣ Using DENSE_RANK() - No skipped ranks if duplicates exist
+-- ======================================================
+SELECT department_id, emp_name, salary
+FROM (
+    SELECT 
+        department_id,
+        emp_name,
+        salary,
+        DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rnk
+    FROM employees
+) ranked
+WHERE rnk <= 3
+ORDER BY department_id, salary DESC;
+
+-- ======================================================
+-- 3️⃣ Using ROW_NUMBER() - Always unique ranking per row
+-- ======================================================
+SELECT department_id, emp_name, salary
+FROM (
+    SELECT 
+        department_id,
+        emp_name,
+        salary,
+        ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rn
+    FROM employees
+) temp
+WHERE rn <= 3
+ORDER BY department_id, salary DESC;
+
+-- ======================================================
+-- 4️⃣ Using Correlated Subquery - Works in older DB versions
+-- (No window function support)
+-- ======================================================
+SELECT e1.department_id, e1.emp_name, e1.salary
+FROM employees e1
+WHERE (
+    SELECT COUNT(DISTINCT e2.salary)
+    FROM employees e2
+    WHERE e2.department_id = e1.department_id
+      AND e2.salary > e1.salary
+) < 3
+ORDER BY e1.department_id, e1.salary DESC;
+
+-- ======================================================
+-- 5️⃣ Using Subquery with LIMIT - MySQL 8.0+ Specific
+-- ======================================================
+SELECT department_id, emp_name, salary
+FROM employees e
+WHERE salary IN (
+    SELECT DISTINCT salary
+    FROM employees
+    WHERE department_id = e.department_id
+    ORDER BY salary DESC
+    LIMIT 3
+)
+ORDER BY department_id, salary DESC;
+
+-- ======================================================
+-- 6️⃣ Using CTE (Common Table Expression) + Window Function
+-- Cleaner and more readable version
+-- ======================================================
+WITH ranked AS (
+    SELECT 
+        department_id,
+        emp_name,
+        salary,
+        ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rn
+    FROM employees
+)
+SELECT department_id, emp_name, salary
+FROM ranked
+WHERE rn <= 3
+ORDER BY department_id, salary DESC;
+
+-- ======================================================
+-- 7️⃣ Using GROUP_CONCAT() - MySQL Trick to show top 3 salaries in one row
+-- (Aggregated result instead of multiple rows)
+-- ======================================================
+SELECT 
+    department_id,
+    GROUP_CONCAT(salary ORDER BY salary DESC SEPARATOR ', ') AS top_3_salaries
+FROM employees
+GROUP BY department_id;
+
+-- ======================================================
+-- ✅ Summary:
+-- ------------------------------------------------------
+-- RANK()         → Keeps ties, can skip ranks.
+-- DENSE_RANK()   → Keeps ties, no skipped ranks.
+-- ROW_NUMBER()   → Always unique row numbers.
+-- COUNT Subquery → Works in all DBs (slower).
+-- LIMIT Subquery → MySQL only.
+-- CTE + Window   → Best for clean, readable SQL.
+-- GROUP_CONCAT() → Summarized output (MySQL trick).
+-- ======================================================
