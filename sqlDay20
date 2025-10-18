@@ -1,0 +1,81 @@
+-- ============================================
+-- 🧠 SQL: Running Total of Sales using Window Functions
+-- ============================================
+
+-- Let's assume we have a table 'sales' with the following structure:
+-- id | sale_date  | amount | customer
+-- -----------------------------------
+-- 1  | 2025-10-01 | 100    | A
+-- 2  | 2025-10-02 | 200    | B
+-- 3  | 2025-10-03 | 150    | A
+-- 4  | 2025-10-04 | 300    | C
+-- 5  | 2025-10-05 | 250    | B
+
+
+-- ✅ 1️⃣ Running total of all sales (overall cumulative sum)
+SELECT 
+    sale_date,
+    amount,
+    -- SUM() with OVER() creates a running total (cumulative sum)
+    SUM(amount) OVER (ORDER BY sale_date) AS running_total
+FROM sales
+ORDER BY sale_date;
+
+
+-- 🧾 Output:
+-- sale_date | amount | running_total
+-- ---------------------------------
+-- 2025-10-01 | 100    | 100
+-- 2025-10-02 | 200    | 300
+-- 2025-10-03 | 150    | 450
+-- 2025-10-04 | 300    | 750
+-- 2025-10-05 | 250    | 1000
+
+
+
+-- ✅ 2️⃣ Running total per customer (resets for each customer)
+SELECT 
+    customer,
+    sale_date,
+    amount,
+    -- PARTITION BY customer → starts running total again for each customer
+    SUM(amount) OVER (PARTITION BY customer ORDER BY sale_date) AS running_total
+FROM sales
+ORDER BY customer, sale_date;
+
+
+-- 🧾 Output:
+-- customer | sale_date | amount | running_total
+-- ---------------------------------------------
+-- A         | 2025-10-01 | 100    | 100
+-- A         | 2025-10-03 | 150    | 250
+-- B         | 2025-10-02 | 200    | 200
+-- B         | 2025-10-05 | 250    | 450
+-- C         | 2025-10-04 | 300    | 300
+
+
+
+-- ✅ 3️⃣ Advanced: Running total using RANGE clause (explicit window frame)
+SELECT
+    sale_date,
+    amount,
+    -- UNBOUNDED PRECEDING → start from the first row
+    -- CURRENT ROW → up to the current row
+    SUM(amount) OVER (
+        ORDER BY sale_date 
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total
+FROM sales;
+
+
+-- Note:
+-- • The above query behaves same as query (1)
+-- • Explicitly defines the window range
+-- • Useful if you want to tweak frame, e.g., last 7 days, last 3 rows, etc.
+
+-- ============================================
+-- ✅ Summary:
+-- SUM() OVER() → allows cumulative / running totals
+-- PARTITION BY → separates totals per group (e.g., per customer, region, etc.)
+-- ORDER BY → defines order of accumulation
+-- ============================================
