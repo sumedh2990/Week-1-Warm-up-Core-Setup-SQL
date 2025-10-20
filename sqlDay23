@@ -1,0 +1,56 @@
+-- ============================================
+-- 🧠 SQL: Find Employees Hired in the Last 90 Days
+-- ============================================
+
+-- ✅ Generic form (works in most databases)
+SELECT 
+    employee_id,
+    first_name,
+    last_name,
+    hire_date
+FROM employees
+WHERE hire_date >= CURRENT_DATE - INTERVAL '90' DAY;
+
+-- 🧾 Explanation:
+-- CURRENT_DATE → gives today’s date
+-- INTERVAL '90' DAY → subtracts 90 days from today
+-- So the WHERE condition filters employees hired within the last 90 days
+
+
+-- ============================================
+-- 🧩 Database-Specific Versions
+-- ============================================
+
+-- 🟢 MySQL / PostgreSQL:
+SELECT * 
+FROM employees
+WHERE hire_date >= CURDATE() - INTERVAL 90 DAY;
+
+-- 🔵 SQL Server:
+SELECT * 
+FROM employees
+WHERE hire_date >= DATEADD(DAY, -90, GETDATE());
+
+-- 🟣 Oracle:
+SELECT * 
+FROM employees
+WHERE hire_date >= SYSDATE - 90;
+
+-- ============================================
+-- ✅ Optional: Sort by recent hires first
+-- ============================================
+SELECT 
+    employee_id,
+    first_name,
+    last_name,
+    hire_date
+FROM employees
+WHERE hire_date >= CURRENT_DATE - INTERVAL '90' DAY
+ORDER BY hire_date DESC;
+
+-- ============================================
+-- 🧠 Summary:
+-- The query filters rows where hire_date is within
+-- the last 90 days from the current date.
+-- Works for new employee onboarding or HR reports.
+-- ============================================
